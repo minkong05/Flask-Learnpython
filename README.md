@@ -44,11 +44,6 @@ The platform includes user authentication, subscription-based access control, AI
 **Payments**
 - PayPal IPN (Instant Payment Notification)
 
-**Utilities**
-- Requests
-- Markdown
-- python-dotenv
-
 
 ## Project Structure
 
