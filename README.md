@@ -1,3 +1,6 @@
+![Python](https://img.shields.io/badge/python-3.12%2B-blue)
+![Flask](https://img.shields.io/badge/flask-web%20framework-lightgrey)
+![License](https://img.shields.io/badge/license-MIT-green)
 # Flask-LearnPython
 
 Flask-LearnPython is an interactive learning platform designed to help users learn Python through structured lessons, examples, and AI assistance.
