@@ -17,6 +17,14 @@ Attackers can bypass blacklists by:
 Because it is impossible to block every dangerous pattern, blacklist filtering
 cannot be relied upon for secure code execution.
 
+
+## Resource Exhaustion
+The HTTP request timeout only limits how long the Flask server waits
+for a response from the sandbox service. It does not terminate user
+code execution inside the sandbox and therefore does not prevent
+resource exhaustion such as infinite loops or excessive CPU usage.
+
+
 ## Example Attack Scenarios
 ### Dynamic Import Bypass
 An attacker can bypass keyword filters by importing modules dynamically:
