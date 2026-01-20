@@ -37,11 +37,14 @@ load_dotenv("password.env")
 logger = logging.getLogger(__name__)        
 logger.setLevel(logging.INFO)               
 
+
 # Load JSON content files
-with open('content.json', 'r') as file:
+BASE_DIR = Path(__file__).resolve().parent
+CONTENT_DIR = BASE_DIR / "content"
+with open(CONTENT_DIR / "content.json", "r", encoding="utf-8") as file:
     content = json.load(file)
 
-with open('content2.json', 'r') as file:
+with open(CONTENT_DIR / "content2.json", "r", encoding="utf-8") as file:
     content2 = json.load(file)
 
 # Flask App Initialization
