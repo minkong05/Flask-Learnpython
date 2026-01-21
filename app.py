@@ -30,6 +30,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # ─── Set-up ─────────────────────────────────────────────────────────────────────
+TESTING = os.getenv("TESTING") == "true"
+
 # Load environment variables
 load_dotenv("password.env")
 
@@ -56,19 +58,33 @@ csrf = CSRFProtect(app)
 
 # Environment Variables for Flask & API Keys
 app.secret_key = os.getenv('SECRET_KEY', 'fallback_secret_key')
-openai.api_key = os.getenv('OPENAI_API_KEY')
+def setup_openai():
+    if not openai.api_key:
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        if not openai.api_key:
+            raise RuntimeError("OPENAI_API_KEY not set")
 
 # Supabase Setup
-supabase_url = os.getenv('SUPABASE_URL')
-supabase_key = os.getenv('SUPABASE_API_KEY')
-supabase: Client = create_client(supabase_url, supabase_key)
+supabase = None
 
+if not TESTING:
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_API_KEY")
+
+    if not supabase_url or not supabase_key:
+        raise RuntimeError("SUPABASE_URL or SUPABASE_API_KEY not set")
+
+    supabase = create_client(supabase_url, supabase_key)
 # Webhook ID
 webhook = os.getenv('WEBHOOK_ID')
 #─────────────────────────────────────────────────────────────────────────────────
 
 
-# ─── User Management Helpers ────────────────────────────────────────────────────
+# ─── User Management & SupaBase Helpers ─────────────────────────────────────────
+def require_supabase():
+    if supabase is None:
+        abort(503)  # Service unavailable
+
 class User:
     def __init__(self, id, username, email, password_hash, unlocked_phase, tier_name):
         self.id = id
@@ -79,6 +95,7 @@ class User:
         self.tier_name = tier_name
   
 def get_user_by_email(email):
+    require_supabase()
     response = supabase.table('users').select('*').eq('email', email).execute()
     if response.data:
         user_data = response.data[0]
@@ -93,6 +110,7 @@ def get_user_by_email(email):
     return None
 
 def create_user(email, username, password_hash):
+    require_supabase()
     new_user = {
         'email': email,
         'username': username,
@@ -104,7 +122,9 @@ def create_user(email, username, password_hash):
     return response.data[0] if response.data else None
 
 def update_user_phase(email, new_phase):
+    require_supabase()
     supabase.table('users').update({'unlocked_phase': new_phase}).eq('email', email).execute()
+
 #─────────────────────────────────────────────────────────────────────────────────  
 
 
@@ -115,6 +135,7 @@ def log_request():
     app.logger.info(f"IP: {request.remote_addr}, Path: {request.path}, Data: {request.form}")
 
 def get_tier_access(user_email):
+    require_supabase()
     response = supabase.table('users').select('tier_name').eq('email', user_email).execute()
 
     if response.data:
@@ -167,6 +188,7 @@ def check_daily_limit(max_queries=20):
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
+            require_supabase()
             user_email = session.get('email')  # Get the currently logged-in user's email
             if not user_email:
                 return jsonify({"error": "Unauthorized"}), 401
@@ -366,6 +388,7 @@ def get_user_profile():
     user_email = session.get('email')
 
     # Directly fetch everything from users table, including tier_name
+    require_supabase()
     response = supabase.table('users').select('username, email, query_count, tier_name').eq('email', user_email).execute()
 
     if not response.data:
@@ -470,9 +493,10 @@ def reset_with_token(token):
 
         hashed_password = generate_password_hash(new_password)
         # Update the database
+        require_supabase()
         supabase.table('users').update({'password_hash': hashed_password}).eq('email', email).execute()
         flash('Your password has been reset. Please log in using your new password!', 'success')
-        return redirect(url_for('login_page'))
+        return redirect(url_for('login'))
 
     # GET request ⇒ display a form for the user to enter new_password and confirm_password
     return render_template('reset_with_token.html', token=token)
@@ -485,6 +509,10 @@ def reset_with_token(token):
 @login_required
 @check_daily_limit(max_queries=20)
 def chatgpt():
+    if TESTING:
+        return jsonify({"error": "ChatGPT disabled during testing"}), 503
+    setup_openai()
+
     data = request.get_json(silent=True) or {}
     user_message = (data.get('message') or "").strip()  
 
@@ -683,6 +711,7 @@ def clean_order_data(order_data):
 
 def save_to_database(order_data):
     """Save order data to the database"""
+    require_supabase()
     try:
         existing = supabase.table('paypal_orders').select('*').eq('order_id', order_data['order_id']).execute()
         if len(existing.data) == 0:
@@ -732,14 +761,6 @@ def serve_sitemap():
         app.logger.error(f"Error serving sitemap: {e}")
         abort(500)
 # ─────────────────────────────────────────────────────────────────────────────────
-
-
-
-
-
-
-
-print(f"Supabase connection status: {'success' if supabase else 'failed'}")
 
 if __name__ == '__main__':
     app.run(debug=False)

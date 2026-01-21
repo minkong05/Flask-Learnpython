@@ -30,5 +30,6 @@ jobs:
         python -m compileall .
 
     - name: Run tests
-      run: |
-        pytest
+      run: pytest
+      env:
+        TESTING: "true"
