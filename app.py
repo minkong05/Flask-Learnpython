@@ -82,8 +82,10 @@ webhook = os.getenv('WEBHOOK_ID')
 
 # ─── User Management & SupaBase Helpers ─────────────────────────────────────────
 def require_supabase():
+    if TESTING:
+        return
     if supabase is None:
-        abort(503)  # Service unavailable
+        abort(503)
 
 class User:
     def __init__(self, id, username, email, password_hash, unlocked_phase, tier_name):
@@ -188,7 +190,8 @@ def check_daily_limit(max_queries=20):
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
-            require_supabase()
+            if not TESTING:
+                require_supabase()
             user_email = session.get('email')  # Get the currently logged-in user's email
             if not user_email:
                 return jsonify({"error": "Unauthorized"}), 401

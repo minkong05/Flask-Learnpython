@@ -32,4 +32,5 @@ jobs:
     - name: Run tests
       run: pytest
       env:
-        TESTING: "true"
+        TESTING = true
+        supabase = None
