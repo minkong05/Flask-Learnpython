@@ -132,6 +132,18 @@ Flask-Learnpython/
 ```
 
 
+## Security Testing
+
+This project includes attacker-style security tests covering:
+- Authentication failure paths
+- Abuse and rate-limit scenarios
+- Code execution input validation
+- Denial-of-service prevention checks
+
+Tests are written using pytest and focus on defensive behavior,
+not just functional correctness.
+
+
 ## Limitations
 - The application is currently implemented as a single-file Flask app (`app.py`), which can become harder to maintain as the project grows.
 - The secure Python code execution sandbox relies on keyword blacklisting and an external execution service, which is not as robust as container-based isolation.
