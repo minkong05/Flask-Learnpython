@@ -56,7 +56,7 @@ CORS(app)
 app.config['SECRET_KEY'] = os.urandom(24)   # Replace with stable secret key in future
 csrf = CSRFProtect(app)
 
-# Environment Variables for Flask & API Keys
+# Environment Variables for Flask & API Key
 app.secret_key = os.getenv('SECRET_KEY', 'fallback_secret_key')
 def setup_openai():
     if not openai.api_key:
