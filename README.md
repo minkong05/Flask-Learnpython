@@ -29,10 +29,6 @@ The application is designed not just to function, but to be **analyzed, attacked
 and defended** as part of learning secure software development.
 
 
-
-
-
-
 ## Overview
 Flask-LearnPython is a full-stack web application built with Flask that provides an interactive platform for learning Python.  
 The application combines structured learning content, AI-assisted explanations, and a secure Python execution sandbox to create a practical learning environment.
@@ -154,7 +150,6 @@ Flask-Learnpython/
 
 
 ## Security Testing
-
 This project includes attacker-style security tests covering:
 - Authentication failure paths
 - Abuse and rate-limit scenarios
@@ -163,6 +158,24 @@ This project includes attacker-style security tests covering:
 
 Tests are written using pytest and focus on defensive behavior,
 not just functional correctness.
+
+
+## CI & Testing
+This project includes a GitHub Actions CI pipeline that runs on every push and pull request.
+
+The pipeline performs:
+- Python syntax validation
+- Automated security-focused tests using pytest
+- CI-safe execution where external services (Supabase, OpenAI) are disabled
+
+During CI runs, the application detects the `TESTING=true` environment variable and:
+- Prevents outbound API calls
+- Disables database access
+- Ensures tests run deterministically without secrets
+
+This design reflects real-world DevSecOps practices, where applications must be testable
+in isolated environments without relying on production credentials.
+
 
 
 ## Limitations
