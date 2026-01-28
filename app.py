@@ -251,7 +251,6 @@ def rate_limit(max_requests=10, time_window=60):
 
 # ─── Login, Register & Logout Routes ─────────────────────────────────────────────
 @app.route('/register', methods=['GET', 'POST'])
-@csrf.exempt
 def register():
     if request.method == 'GET':
         return render_template('register.html')
@@ -279,7 +278,7 @@ def register():
         return jsonify({"status": "error", "message": "Registration failed"}), 500  
 
 @app.route('/login',methods=['GET', 'POST'])
-@csrf.exempt
+# @csrf.exempt
 def login():
     if request.method == 'GET':
         return render_template('login.html')

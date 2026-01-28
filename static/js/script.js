@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
             const email = document.getElementById('registerEmail').value.trim();
             const username = document.getElementById('registerUsername').value.trim();
             const password = document.getElementById('registerPassword').value.trim();
@@ -42,7 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch('/register', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-Token': csrfToken
+                            },
                     body: JSON.stringify({ email, username, password }),
                 });
 
@@ -60,10 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
 
@@ -75,7 +85,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch('/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-Token': csrfToken
+                            },
                     body: JSON.stringify({ email, password }),
                 });
 
