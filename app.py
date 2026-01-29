@@ -278,7 +278,6 @@ def register():
         return jsonify({"status": "error", "message": "Registration failed"}), 500  
 
 @app.route('/login',methods=['GET', 'POST'])
-# @csrf.exempt
 def login():
     if request.method == 'GET':
         return render_template('login.html')
