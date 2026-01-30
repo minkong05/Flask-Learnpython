@@ -1,16 +1,21 @@
-// Security utilities for Monaco Editor
+// ============================================================================
+// Security Utilities for Monaco Editor
+// ============================================================================
 const securityUtils = {
-    // Validate code before execution
+
+   /* ========================================================================
+       Code Validation
+       ======================================================================== */
     validateCode(code) {
       const blacklistedKeywords = [
-        'import os',
-        'import sys',
-        'import subprocess',
-        '__import__',
-        'eval(',
-        'exec(',
-        'open(',
-      ]
+          'import os',
+          'import sys',
+          'import subprocess',
+          '__import__',
+          'eval(',
+          'exec(',
+          'open(',
+        ]
   
       // Check for blacklisted keywords
       for (const keyword of blacklistedKeywords) {
@@ -27,13 +32,18 @@ const securityUtils = {
       return true
     },
   
-    // Sanitize output
+
+    /* ========================================================================
+       Output Sanitization
+       ======================================================================== */
     sanitizeOutput(output) {
       // Remove any HTML tags
       return output.replace(/<[^>]*>/g, '')
     },
   
-    // Rate limiting
+ /* ========================================================================
+       Rate Limiting
+       ======================================================================== */
     createRateLimiter(maxRequests = 10, timeWindow = 60000) {
       const requests = new Map()
       

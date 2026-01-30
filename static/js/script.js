@@ -1,4 +1,8 @@
+/* ==========================================================================
+   Core DOM Ready Logic
+   ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+    /* ───────────────── Mobile Menu Toggle ───────────────── */
     const menuIcon = document.getElementById('menuIcon');
     if (menuIcon) {
         menuIcon.addEventListener('click', () => {
@@ -9,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /* ───────────────── Scroll To Top Button ───────────────── */
     const scrollToTopButton = document.getElementById('scrollToTop');
     if (scrollToTopButton) {
         scrollToTopButton.addEventListener('click', (e) => {
@@ -20,13 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /* ───────────────── Registration Form ───────────────── */
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
             const email = document.getElementById('registerEmail').value.trim();
             const username = document.getElementById('registerUsername').value.trim();
             const password = document.getElementById('registerPassword').value.trim();
@@ -66,14 +71,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    
+    /* ───────────────── Login Form ───────────────── */    
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
 
@@ -108,8 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-
-
+/* ==========================================================================
+   Smooth Scroll for Anchor Links
+   ========================================================================== */
 document.addEventListener("DOMContentLoaded", function () {
     // Select all links with the class 'smooth-scroll
     const links = document.querySelectorAll('.smooth-scroll');
@@ -128,7 +133,9 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-
+/* ==========================================================================
+   Smooth Scroll on Page Load with Hash
+   ========================================================================== */
 document.addEventListener("DOMContentLoaded", function () {
     // Check if the URL contains a hash
     const hash = window.location.hash;
@@ -146,7 +153,9 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-
+/* ==========================================================================
+   Profile Menu Toggle & Fetch
+   ========================================================================== */
 document.getElementById("profileButton").addEventListener("click", () => {
     const profileDetails = document.getElementById("profileDetails");
 
@@ -179,6 +188,9 @@ document.getElementById("profileButton").addEventListener("click", () => {
 });
 
 
+/* ==========================================================================
+   Close Profile Menu When Clicking Outside
+   ========================================================================== */
 document.addEventListener("click", (event) => {
     const profileMenu = document.getElementById("profileDetails");
     if (!event.target.closest(".profile-menu")) {

@@ -1,4 +1,12 @@
-require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs' }});
+// ============================================================================
+// Monaco Editor Configuration & Python Language Support
+// ============================================================================
+
+require.config({ 
+    paths: { 
+        'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs' 
+    }
+});
 
 require(['vs/editor/editor.main'], function () {
     const PYTHON_KEYWORDS = [
@@ -15,7 +23,10 @@ require(['vs/editor/editor.main'], function () {
         'complex','hasattr','max','round','delattr','hash','memoryview','set'
     ];
 
-    // Monarch syntax definition: assign specific tokens for class names, function names, decorators, built-in functions, etc.
+
+   /* ========================================================================
+       Monarch Tokenizer (Python Syntax Highlighting)
+       ======================================================================== */
     monaco.languages.setMonarchTokensProvider('python', {
         defaultToken: '',
         tokenPostfix: '.python',
@@ -93,7 +104,10 @@ require(['vs/editor/editor.main'], function () {
         }
     });
 
-    // Define theme and assign corresponding colors
+
+ /* ========================================================================
+       Editor Theme
+       ======================================================================== */
     monaco.editor.defineTheme('vscode-dark-plus', {
         base: 'vs-dark',
         inherit: true,
@@ -118,14 +132,23 @@ require(['vs/editor/editor.main'], function () {
         }
     });
 
-    window.editor = monaco.editor.create(document.getElementById('editor'), {
-        value: '# Start coding here\n\nif True:\n    print("Hello!")\nelse:\n    print("Not greater than 9")',
-        language: 'python',
-        theme: 'vscode-dark-plus',
-        automaticLayout: true
-    });
 
-    // Basic error checking: check statements that require a colon
+    /* ========================================================================
+       Editor Initialization
+       ======================================================================== */
+    window.editor = monaco.editor.create(
+        document.getElementById('editor'), 
+        {
+            value: '# Start coding here\n\nif True:\n    print("Hello!")\nelse:\n    print("Not greater than 9")',
+            language: 'python',
+            theme: 'vscode-dark-plus',
+            automaticLayout: true
+        }
+    );
+
+ /* ========================================================================
+       Basic Python Syntax Validation
+       ======================================================================== */
     function checkPythonErrors() {
         const code = window.editor.getValue();
         const lines = code.split('\n');
@@ -154,7 +177,10 @@ require(['vs/editor/editor.main'], function () {
         checkPythonErrors();
     });
 
-    // Autocomplete
+
+    /* ========================================================================
+       Autocomplete Provider
+       ======================================================================== */
     monaco.languages.registerCompletionItemProvider('python', {
         provideCompletionItems: () => {
             const suggestions = [];
@@ -193,7 +219,9 @@ require(['vs/editor/editor.main'], function () {
     });
 
 
-    // Update the run code event listener
+ /* ========================================================================
+       Run Code Handler
+       ======================================================================== */
     document.getElementById('runCode').addEventListener('click', async () => {
         const code = window.editor.getValue();
         const terminalOutput = document.getElementById('terminalOutput');
@@ -231,7 +259,9 @@ require(['vs/editor/editor.main'], function () {
         }
     });
 
-    // Add execution timeout
+    /* ========================================================================
+       Execution Timeout Helper
+       ======================================================================== */
     const executeWithTimeout = async (code, timeout = 5000) => {
         return Promise.race([
             fetch('/run_code', {
@@ -248,9 +278,10 @@ require(['vs/editor/editor.main'], function () {
 });
 
 
-
-
-
+/* ============================================================================
+// Terminal Utilities
+// ============================================================================
+*/
 document.getElementById('clearTerminal').addEventListener('click', () => {
     const terminalOutput = document.getElementById('terminalOutput');
     terminalOutput.textContent = ""; // Clear terminal content

@@ -1,23 +1,30 @@
-// -----------------------------
-// Logic for adjusting the width of left and right panels
-// -----------------------------
+// ============================================================================
+// Panel Resizing Logic (Horizontal & Vertical)
+// ============================================================================
 (() => {
+
+ /* ========================================================================
+       Horizontal Split (Left / Right Panels)
+       ======================================================================== */
     const resizer = document.getElementById('resizer');
     const leftPanel = document.querySelector('.left-panel');
     const rightPanel = document.querySelector('.right-panel');
+
     let isResizing = false;
 
     resizer.addEventListener('mousedown', (e) => {
-        // Start resizing when mouse is pressed down on the divider
         isResizing = true;
+
         // Temporarily disable text selection and change mouse cursor
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
+
         e.preventDefault(); // Prevent default actions like text selection
     });
 
     document.addEventListener('mousemove', (e) => {
         if (!isResizing) return;
+
         const containerWidth = document.querySelector('.main-container').offsetWidth;
         const newLeftWidthPercent = (e.clientX / containerWidth) * 100;
 
@@ -52,11 +59,12 @@
     let isResizingHorizontal = false;
 
     resizerHorizontal.addEventListener('mousedown', (e) => {
-        // Start height adjustment when mouse is pressed on the horizontal divider
+
         isResizingHorizontal = true;
+
         document.body.style.cursor = 'row-resize';
         document.body.style.userSelect = 'none';
-        e.preventDefault(); // Similarly, only prevent default events on the divider
+        e.preventDefault();         //prevent default events on the divider
     });
 
     document.addEventListener('mousemove', (e) => {
@@ -86,7 +94,12 @@
         }
     });
 
+
+    /* ========================================================================
+       Toggle Bottom Panel Visibility (Simple Toggle)
+       ======================================================================== */
     document.getElementById('hideButton').addEventListener('click', function () {
+
         const leftBottom = document.querySelector('.left-bottom');
         const isHidden = leftBottom.classList.toggle('hidden'); // Toggle the 'hidden' class
     
@@ -94,12 +107,15 @@
         this.textContent = isHidden ? 'Show' : 'Hide';
     });
 
+
+    /* ========================================================================
+       Toggle Bottom Panel (Expanded / Collapsed Layout)
+       ======================================================================== */
     document.addEventListener("DOMContentLoaded", () => {
         const hideButton = document.getElementById("hideButton");
         const chatContainer = document.querySelector(".chatgpt-container");
         const leftBottom = document.querySelector(".left-bottom");
         
-        // Initial state flag
         let isHidden = false;
     
         hideButton.addEventListener("click", () => {
