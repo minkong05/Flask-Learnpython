@@ -94,7 +94,7 @@ The project focuses on real-world backend engineering concepts, including user a
 
 
 ## Requirements
-- Python 3.9+
+- Python 3.12
 - pip
 - Virtual environment recommended
 
