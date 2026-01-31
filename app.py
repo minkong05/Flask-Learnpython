@@ -576,9 +576,18 @@ def run_code():
 
    # Block dangerous operations (e.g., file I/O or system commands)
     blacklist = [
-        'import os', 'import turtle', 'import sys', 'import subprocess', '__import__',
-        'eval(', 'exec(', 'open(', 'write(', 'read('
+        'import os', 
+        'import turtle', 
+        'import sys', 
+        'import subprocess', 
+        '__import__',
+        'eval(', 
+        'exec(', 
+        'open(', 
+        'write(', 
+        'read('
     ]
+    
     if any(keyword in code for keyword in blacklist):
         return jsonify({"error": "Forbidden keyword in code"}), 403
 
