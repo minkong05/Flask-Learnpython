@@ -576,16 +576,56 @@ def run_code():
 
    # Block dangerous operations (e.g., file I/O or system commands)
     blacklist = [
-        'import os', 
-        'import turtle', 
-        'import sys', 
-        'import subprocess', 
+        # --- OS / system access ---
+        'import os',
+        'import sys',
+        'import subprocess',
+        'import shutil',
+        'import signal',
+        'import ctypes',
+        'import resource',
+
+        # --- Dangerous builtins / eval ---
         '__import__',
-        'eval(', 
-        'exec(', 
-        'open(', 
-        'write(', 
-        'read('
+        'eval(',
+        'exec(',
+        'compile(',
+
+        # --- File system access ---
+        'open(',
+        'read(',
+        'write(',
+        'file(',
+
+        # --- Network access ---
+        'import socket',
+        'import requests',
+        'import urllib',
+        'import http',
+        'import ftplib',
+
+        # --- Environment / secrets ---
+        'os.environ',
+        'getenv(',
+
+        # --- Process & threading ---
+        'import threading',
+        'import multiprocessing',
+        'fork(',
+        'kill(',
+
+        # --- Python internals / escapes ---
+        '__class__',
+        '__bases__',
+        '__subclasses__',
+        '__globals__',
+        '__getattribute__',
+        '__dict__',
+
+        # --- Code execution tricks ---
+        'lambda ',
+        'globals(',
+        'locals(',
     ]
     
     if any(keyword in code for keyword in blacklist):
