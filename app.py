@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from functools import wraps
+from flask import current_app
 
 # ─── Third-Party Libraries ─────────────────────────────────────────────────────
 import requests
@@ -29,7 +30,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # ─── Set-up ─────────────────────────────────────────────────────────────────────
-TESTING = os.getenv("TESTING") == "true"
 
 # Load environment variables
 load_dotenv("password.env")
@@ -66,7 +66,7 @@ def setup_openai():
 # Supabase Setup
 supabase = None
 
-if not TESTING:
+if not app.config.get("TESTING"):
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_key = os.getenv("SUPABASE_API_KEY")
 
@@ -81,7 +81,7 @@ webhook = os.getenv('WEBHOOK_ID')
 
 # ─── User Management & SupaBase Helpers ─────────────────────────────────────────
 def require_supabase():
-    if TESTING:
+    if app.config.get("TESTING"):
         return
     if supabase is None:
         abort(503)
@@ -189,7 +189,7 @@ def check_daily_limit(max_queries=20):
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
-            if TESTING:
+            if app.config.get("TESTING"):
                 return f(*args, **kwargs)
             
             require_supabase()
@@ -291,7 +291,7 @@ def login():
     if not email or not password:
         return jsonify({"status": "error", "message": "Email or password missing"}), 400
 
-    if TESTING:
+    if app.config.get("TESTING"):
         return jsonify({"status": "error", "message": "Invalid email or password"}), 401
 
     user = get_user_by_email(email)
@@ -522,7 +522,7 @@ def chatgpt():
         return jsonify({"status": "error", "message": "Message is required"}), 400
     if len(user_message) > 500:
         return jsonify({"status": "error", "message": "Your question is too long. Please shorten it."}), 400
-    if TESTING:
+    if app.config.get("TESTING"):
         return jsonify({"error": "ChatGPT disabled during testing"}), 503
     
     setup_openai()
