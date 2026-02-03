@@ -1,11 +1,5 @@
-import os
-os.environ["FLASK_TESTING"] = "1"
-
 import pytest
 from app import app as flask_app
-
-if os.getenv("FLASK_TESTING") == "1":
-    os.environ["TESTING"] = "true"
 
 @pytest.fixture
 def app():

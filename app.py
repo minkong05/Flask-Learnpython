@@ -71,7 +71,6 @@ def init_supabase():
 app = Flask(__name__)
 CORS(app)
 app.config.setdefault("TESTING", False)
-init_supabase()
 
 app.config['SECRET_KEY'] = os.urandom(24)   # Replace with stable secret key in future
 csrf = CSRFProtect(app)
@@ -94,8 +93,10 @@ webhook = os.getenv('WEBHOOK_ID')
 def require_supabase():
     if app.config.get("TESTING"):
         return
+
+    global supabase
     if supabase is None:
-        abort(503)
+        init_supabase()
 
 class User:
     def __init__(self, id, username, email, password_hash, unlocked_phase, tier_name):
