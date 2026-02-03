@@ -48,9 +48,30 @@ with open(CONTENT_DIR / "content.json", "r", encoding="utf-8") as file:
 with open(CONTENT_DIR / "content2.json", "r", encoding="utf-8") as file:
     content2 = json.load(file)
 
+# Supabase Setup
+supabase = None
+
+def init_supabase():
+    global supabase
+
+    # if tests, skip supabase completely
+    if app.config.get("TESTING"):
+        return
+
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_API_KEY")
+
+    # in production/dev, these MUST exist
+    if not supabase_url or not supabase_key:
+        raise RuntimeError("SUPABASE_URL or SUPABASE_API_KEY not set")
+
+    supabase = create_client(supabase_url, supabase_key)
+
 # Flask App Initialization
 app = Flask(__name__)
 CORS(app)
+app.config.setdefault("TESTING", False)
+init_supabase()
 
 app.config['SECRET_KEY'] = os.urandom(24)   # Replace with stable secret key in future
 csrf = CSRFProtect(app)
@@ -63,17 +84,7 @@ def setup_openai():
         if not openai.api_key:
             raise RuntimeError("OPENAI_API_KEY not set")
 
-# Supabase Setup
-supabase = None
 
-if not app.config.get("TESTING"):
-    supabase_url = os.getenv("SUPABASE_URL")
-    supabase_key = os.getenv("SUPABASE_API_KEY")
-
-    if not supabase_url or not supabase_key:
-        raise RuntimeError("SUPABASE_URL or SUPABASE_API_KEY not set")
-
-    supabase = create_client(supabase_url, supabase_key)
 # Webhook ID
 webhook = os.getenv('WEBHOOK_ID')
 #─────────────────────────────────────────────────────────────────────────────────
