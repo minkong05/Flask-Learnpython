@@ -38,7 +38,6 @@ load_dotenv("password.env")
 logger = logging.getLogger(__name__)        
 logger.setLevel(logging.INFO)               
 
-
 # Load JSON content files
 BASE_DIR = Path(__file__).resolve().parent
 CONTENT_DIR = BASE_DIR / "content"
@@ -50,7 +49,6 @@ with open(CONTENT_DIR / "content2.json", "r", encoding="utf-8") as file:
 
 # Supabase Setup
 supabase = None
-
 def init_supabase():
     global supabase
 
@@ -70,10 +68,9 @@ def init_supabase():
 # Flask App Initialization
 app = Flask(__name__)
 CORS(app)
-app.config.setdefault("TESTING", False)
-
-app.config['SECRET_KEY'] = os.urandom(24)   # Replace with stable secret key in future
 csrf = CSRFProtect(app)
+app.config.setdefault("TESTING", False)
+app.config['SECRET_KEY'] = os.urandom(24)   # Replace with stable secret key in future
 
 # Environment Variables for Flask & API Key
 app.secret_key = os.getenv('SECRET_KEY', 'fallback_secret_key')
@@ -82,7 +79,6 @@ def setup_openai():
         openai.api_key = os.getenv("OPENAI_API_KEY")
         if not openai.api_key:
             raise RuntimeError("OPENAI_API_KEY not set")
-
 
 # Webhook ID
 webhook = os.getenv('WEBHOOK_ID')
@@ -137,7 +133,6 @@ def create_user(email, username, password_hash):
 def update_user_phase(email, new_phase):
     require_supabase()
     supabase.table('users').update({'unlocked_phase': new_phase}).eq('email', email).execute()
-
 #─────────────────────────────────────────────────────────────────────────────────  
 
 

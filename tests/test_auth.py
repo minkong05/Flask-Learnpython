@@ -12,6 +12,14 @@ def test_login_invalid_credentials(client):
     })
     assert res.status_code == 401
 
+def test_login_missing_email(client):
+    res = client.post("/login", json={
+        "password": "secret"
+    })
+    assert res.status_code == 400
+
+    data = res.get_json()
+    assert data["message"] == "Email or password missing"
 
 def test_login_missing_password(client):
     res = client.post("/login", json={
