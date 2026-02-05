@@ -1,48 +1,44 @@
 # ─── Standard Library ──────────────────────────────────────────────────────────
 import os
+import sys
 import json
 import time
-import hashlib
 import logging
 from datetime import datetime
 from pathlib import Path
 from functools import wraps
-from flask import current_app
 
 # ─── Third-Party Libraries ─────────────────────────────────────────────────────
 import requests
 import markdown
 import openai
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import create_client
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import (
-    Flask, render_template, redirect, url_for, request, session, jsonify, flash, send_from_directory, Response, abort, make_response
-    )
+    Flask, render_template, redirect, url_for,
+    request, session, jsonify, flash,
+    send_from_directory, Response, abort
+)
 
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
-from werkzeug.security import generate_password_hash, check_password_hash
 
-#──── Rate-Limit (Limiter) ───────────────────────────────────────────────────────
+# ─── Rate-Limit ────────────────────────────────────────────────────────────────
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 #─────────────────────────────────────────────────────────────────────────────────
 
 
 # ─── Set-up ─────────────────────────────────────────────────────────────────────
-
-# Load environment variables
 load_dotenv("password.env")
 
-# Logging setup
 logger = logging.getLogger(__name__)        
 logger.setLevel(logging.INFO)               
 
-# Load JSON content files
 BASE_DIR = Path(__file__).resolve().parent
 CONTENT_DIR = BASE_DIR / "content"
 with open(CONTENT_DIR / "content.json", "r", encoding="utf-8") as file:
@@ -51,7 +47,16 @@ with open(CONTENT_DIR / "content.json", "r", encoding="utf-8") as file:
 with open(CONTENT_DIR / "content2.json", "r", encoding="utf-8") as file:
     content2 = json.load(file)
 
-# Supabase Setup
+# ─── Flask App Initialization ──────────────────────────────────────────────────
+app = Flask(__name__)
+
+app.config["TESTING"] = ("pytest" in sys.modules) or (os.getenv("TESTING") == "true")
+app.config['SECRET_KEY'] = os.urandom(24)
+app.secret_key = os.getenv('SECRET_KEY', 'fallback_secret_key')
+
+CORS(app)
+csrf = CSRFProtect(app)
+
 supabase = None
 def init_supabase():
     global supabase
@@ -69,24 +74,33 @@ def init_supabase():
 
     supabase = create_client(supabase_url, supabase_key)
 
-# Flask App Initialization
-app = Flask(__name__)
-CORS(app)
-csrf = CSRFProtect(app)
-app.config.setdefault("TESTING", False)
-app.config['SECRET_KEY'] = os.urandom(24)   # Replace with stable secret key in future
+def init_limiter(app):
+    # In tests/CI: don’t require Redis
+    if app.config.get("TESTING"):
+        storage_uri = "memory://"
+    else:
+        storage_uri = os.getenv("REDIS_URL", "redis://localhost:6379")
 
-# Environment Variables for Flask & API Key
-app.secret_key = os.getenv('SECRET_KEY', 'fallback_secret_key')
+    limiter = Limiter(
+    key_func=get_remote_address,
+    storage_uri=("memory://" if app.config["TESTING"] else os.getenv("REDIS_URL", "redis://localhost:6379")),
+    default_limits=["200 per day", "50 per hour"],
+    )
+    limiter.init_app(app)  
+
+    return limiter
+limiter = init_limiter(app)
+
 def setup_openai():
     if not openai.api_key:
         openai.api_key = os.getenv("OPENAI_API_KEY")
         if not openai.api_key:
             raise RuntimeError("OPENAI_API_KEY not set")
 
-# Webhook ID
 webhook = os.getenv('WEBHOOK_ID')
 #─────────────────────────────────────────────────────────────────────────────────
+
+
 
 
 # ─── User Management & SupaBase Helpers ─────────────────────────────────────────
@@ -236,13 +250,6 @@ def check_daily_limit(max_queries=20):
         return wrapped
     return decorator
 
-limiter = Limiter(
-    key_func=get_remote_address,
-    storage_uri="redis://localhost:6379",
-    default_limits=["200 per day", "50 per hour"]
-)
-
-limiter.init_app(app)
 # ─────────────────────────────────────────────────────────────────────────────────
 
 
