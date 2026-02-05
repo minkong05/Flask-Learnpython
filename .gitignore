@@ -215,4 +215,7 @@ temp.py
 tempCodeRunnerFile.py
 .DS_Store
 
+# Redis
+dump.rdb
+*.rdb
 
