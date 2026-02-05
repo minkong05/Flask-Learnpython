@@ -26,6 +26,10 @@ from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
+
+#──── Rate-Limit (Limiter) ───────────────────────────────────────────────────────
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 #─────────────────────────────────────────────────────────────────────────────────
 
 
@@ -232,26 +236,13 @@ def check_daily_limit(max_queries=20):
         return wrapped
     return decorator
 
-def rate_limit(max_requests=10, time_window=60):
-    def decorator(f):
-        requests = {}
-        
-        @wraps(f)
-        def wrapped(*args, **kwargs):
-            user_id = session.get('user_id', request.remote_addr)
-            now = time.time()
-            
-            # Clean old requests
-            requests[user_id] = [t for t in requests.get(user_id, []) 
-                               if now - t < time_window]
-            
-            if len(requests[user_id]) >= max_requests:
-                return make_response('Rate limit exceeded', 429)
-                
-            requests[user_id].append(now)
-            return f(*args, **kwargs)
-        return wrapped
-    return decorator
+limiter = Limiter(
+    key_func=get_remote_address,
+    storage_uri="redis://localhost:6379",
+    default_limits=["200 per day", "50 per hour"]
+)
+
+limiter.init_app(app)
 # ─────────────────────────────────────────────────────────────────────────────────
 
 
@@ -329,6 +320,7 @@ def home():
 @app.route('/unlock')
 @login_required
 @require_tier("Additional Learning Materials", "Standard Tier", "Full Access Plan")
+@limiter.limit("5 per minute")
 def unlock():
     return render_template('unlock.html')
     
@@ -644,7 +636,7 @@ def run_code():
   # Send the code to the sandbox service for execution
     try:
        # URL of the sandbox service (the Render-hosted sandbox web service address)
-        sandbox_service_url = "https://learnpython-sandbox.onrender.com/execute"
+        sandbox_service_url = "https://learnpython-sandbox-ncod.onrender.com/execute"
 
       # Send a POST request to the sandbox service
         response = requests.post(
@@ -668,8 +660,8 @@ def run_code():
 
 # ─── Pay-pal Section ─────────────────────────────────────────────────────────────
 # Configure the PayPal environment
-PAYPAL_VERIFY_URL = "https://ipnpb.paypal.com/cgi-bin/webscr"  # Production environment
-# PAYPAL_VERIFY_URL = "https://ipnpb.sandbox.paypal.com/cgi-bin/webscr"  # Sandbox environment
+# PAYPAL_VERIFY_URL = "https://ipnpb.paypal.com/cgi-bin/webscr"  # Production environment
+PAYPAL_VERIFY_URL = "https://ipnpb.sandbox.paypal.com/cgi-bin/webscr"  # Sandbox environment
 
 @app.route('/paypal/ipn', methods=['POST'])
 @csrf.exempt
