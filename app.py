@@ -89,7 +89,7 @@ def init_limiter(app):
     limiter.init_app(app)  
 
     return limiter
-limiter = init_limiter(app)
+
 
 def setup_openai():
     if not openai.api_key:
@@ -98,9 +98,28 @@ def setup_openai():
             raise RuntimeError("OPENAI_API_KEY not set")
 
 webhook = os.getenv('WEBHOOK_ID')
+
+
+# ─── Rate limit rules (central place) ───────────────────────────────────────────
+limiter = init_limiter(app)
+LIMITS = {
+    # Auth endpoints (brute force / enumeration)
+    "REGISTER": "5 per minute; 30 per hour",
+    "LOGIN": "5 per minute; 30 per hour",
+    "RESET_REQUEST": "5 per minute; 30 per hour",
+    "RESET_TOKEN": "5 per minute; 30 per hour",
+
+    # Expensive / abusable endpoints
+    "CHATGPT": "10 per minute; 100 per day",
+    "RUN_CODE": "5 per minute; 60 per hour",
+
+    # Payment webhooks (prevent spam)
+    "PAYPAL_IPN": "30 per minute",
+
+    # Paid content / unlock (your existing one)
+    "UNLOCK": "5 per minute",
+}
 #─────────────────────────────────────────────────────────────────────────────────
-
-
 
 
 # ─── User Management & SupaBase Helpers ─────────────────────────────────────────
@@ -255,6 +274,7 @@ def check_daily_limit(max_queries=20):
 
 # ─── Login, Register & Logout Routes ─────────────────────────────────────────────
 @app.route('/register', methods=['GET', 'POST'])
+@limiter.limit(LIMITS["REGISTER"])
 def register():
     if request.method == 'GET':
         return render_template('register.html')
@@ -282,6 +302,7 @@ def register():
         return jsonify({"status": "error", "message": "Registration failed"}), 500  
 
 @app.route('/login',methods=['GET', 'POST'])
+@limiter.limit(LIMITS["LOGIN"])
 def login():
     if request.method == 'GET':
         return render_template('login.html')
@@ -327,7 +348,7 @@ def home():
 @app.route('/unlock')
 @login_required
 @require_tier("Additional Learning Materials", "Standard Tier", "Full Access Plan")
-@limiter.limit("5 per minute")
+@limiter.limit(LIMITS["UNLOCK"])
 def unlock():
     return render_template('unlock.html')
     
@@ -448,6 +469,7 @@ mail = Mail(app)
 s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 @app.route('/reset', methods=['GET', 'POST'])
+@limiter.limit(LIMITS["RESET_REQUEST"])
 def reset():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -478,6 +500,7 @@ def reset():
     return render_template('reset.html')
 
 @app.route('/reset/<token>', methods=['GET', 'POST'])
+@limiter.limit(LIMITS["RESET_TOKEN"])
 def reset_with_token(token):
     try:
        # Parse the token
@@ -519,6 +542,7 @@ def reset_with_token(token):
 @app.route('/chatgpt', methods=['POST'])
 @csrf.exempt
 @login_required
+@limiter.limit(LIMITS["CHATGPT"])
 @check_daily_limit(max_queries=20)
 def chatgpt():
     data = request.get_json(silent=True) or {}
@@ -574,6 +598,7 @@ def chatgpt():
 # Update the run_code route with security measures
 @app.route('/run_code', methods=['POST'])
 @login_required
+@limiter.limit(LIMITS["RUN_CODE"])
 def run_code():
     # Retrieve the code submitted by the user
     data = request.get_json()
@@ -672,6 +697,7 @@ PAYPAL_VERIFY_URL = "https://ipnpb.sandbox.paypal.com/cgi-bin/webscr"  # Sandbox
 
 @app.route('/paypal/ipn', methods=['POST'])
 @csrf.exempt
+@limiter.limit(LIMITS["PAYPAL_IPN"])
 def paypal_ipn():
     """
     Handle PayPal IPN (Instant Payment Notification) requests.
