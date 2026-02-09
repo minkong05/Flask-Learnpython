@@ -1,13 +1,22 @@
 FROM python:3.10-slim
 
+# Create non-root user
+RUN useradd -m sandbox
+
+# Disable dangerous Linux capabilities
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /sandbox
+USER sandbox
 
-RUN useradd -ms /bin/bash sandbox_user
-USER sandbox_user
+# Copy ONLY sandbox code
+COPY sandbox_app.py .
+COPY requirements.txt .
 
-COPY . .
+# Install minimal deps only
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install --no-cache-dir --upgrade pip
-RUN pip install -r requirements.txt
-
-CMD sh -c "python app.py && docker run sandbox-image"
+# Run sandbox API
+CMD ["python", "sandbox_app.py"]
