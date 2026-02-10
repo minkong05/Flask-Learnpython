@@ -99,7 +99,6 @@ def setup_openai():
 
 webhook = os.getenv('WEBHOOK_ID')
 
-
 # ─── Rate limit rules (central place) ───────────────────────────────────────────
 limiter = init_limiter(app)
 LIMITS = {
