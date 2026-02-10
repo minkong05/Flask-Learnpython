@@ -1,6 +1,7 @@
 ## 🔴 BUG-001 — In-Memory Rate Limiting (Auth Bypass)
 
 **Status** Fixed
+
 **Severity:** Critical  
 **Category:** Security / Abuse Prevention  
 **Files:** app.py  
