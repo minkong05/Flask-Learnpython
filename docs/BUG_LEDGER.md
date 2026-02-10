@@ -1,6 +1,5 @@
 ## 🔴 BUG-001 — In-Memory Rate Limiting (Auth Bypass)
 
-**Status** Fixed
 **Severity:** Critical  
 **Category:** Security / Abuse Prevention  
 **Files:** app.py  
@@ -28,6 +27,15 @@ Security control implemented without shared state.
 
 ### Priority
 🚨 **Immediate**
+
+## Fix Status
+- **Status:** Fixed  
+- **Date:** 2026-02-10  
+- **Approach:**
+  - Replaced in-memory rate limiting with Redis-backed shared state
+- **Residual Risk:**
+  - Rate limiting depends on Redis availability
+  - Redis outage would disable enforcement (fail-closed recommended)
 
 
 ## 🔴 BUG-002 — Python Sandbox Is Not OS-Isolated (RCE)
