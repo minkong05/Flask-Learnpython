@@ -1,8 +1,6 @@
 # Attack Surface Analysis
 
-This document enumerates all externally reachable entry points
-into the Flask-Learnpython application and evaluates their
-security risks and mitigations.
+This document enumerates externally reachable entry points into the Flask-LearnPython application and evaluates their security risks and mitigations.
 
 An attack surface includes:
 - HTTP routes
@@ -11,7 +9,7 @@ An attack surface includes:
 - Any user-controlled input that influences execution
 
 
-## /register (POST)
+## /register (GET, POST)
 ### Description
 Allows a new user to create an account.
 
@@ -21,18 +19,20 @@ Allows a new user to create an account.
 - password
 
 ### Threats
-- Brute-force account creation
+- Automated account creation / abuse
 - Weak password selection
 - User enumeration
 - Injection via input fields
 
 ### Existing Mitigations
-- Password hashing
-- CSRF protection
+- Password hashing for stored credentials
+- CSRF protection enabled globally (ensure JSON auth endpoints handle CSRF correctly)
+- Rate limiting on registration to reduce automated abuse
 
 ### Remaining Risks
-- Weak password policy
-- Lack of CAPTCHA
+- Weak password policy (no minimum length/complexity rules)
+- Lack of CAPTCHA / bot defence
+- Potential user enumeration depending on error messaging
 
 
 ## /login (GET, POST)
@@ -47,11 +47,12 @@ Authenticates a user and establishes a session.
 - Credential stuffing
 - Brute-force login attempts
 - User enumeration via response messages
-- Session fixation
+- Session fixation / session hijacking
 
 ### Existing Mitigations
 - Password hashing verification
 - Session-based authentication
+- Rate limiting on login attempts to reduce brute force / credential stuffing
 
 ### Remaining Risks
 - No account lockout / progressive delay after repeated failures
@@ -70,34 +71,34 @@ Clears the user session.
 - CSRF-based forced logout
 
 ### Existing Mitigations
-- Login required
+- Login required (prevents unauthenticated triggering)
 
 ### Remaining Risks
-- Logout performed via GET
-- CSRF protection not enforced
+- Logout is performed via GET (should be POST)
+- CSRF protection is not enforced on logout, enabling forced logout via cross-site requests
 
 
 ## Content & Learning Routes
-## /, /unlock, /phase/<int>, /stage/<int>, /learn, /learn2
+### /, /unlock, /phase/<int>, /stage/<int>, /learn, /learn2
 ### Description
 Serve protected learning content based on subscription tier.
 
 ### Inputs
 - URL parameters
-- Query parameters (chp)
+- Query parameters (e.g., `chp`)
 
 ### Threats
-- Insecure Direct Object Reference (IDOR)
-- Authorization bypass via parameter tampering
+- Authorisation bypass via parameter tampering
 - Content scraping
+- Insecure direct object reference (IDOR) style issues (if access checks are incorrect)
 
 ### Existing Mitigations
 - Login required
-- Tier-based authorization checks
+- Tier-based authorisation checks on protected routes
 
 ### Remaining Risks
-- Reliance on server-side enforcement only
-- No explicit access logging or alerting
+- Reliance on server-side enforcement only (no additional monitoring/alerting)
+- No explicit access logging or alerting for suspicious scraping patterns
 
 
 ## /get_user_profile (GET)
@@ -109,19 +110,20 @@ Returns user profile data as JSON.
 
 ### Threats
 - Information disclosure
-- Enumeration if session compromised
+- Enumeration if a session is compromised
 
 ### Existing Mitigations
 - Login required
-- Server-side user lookup
+- Server-side user lookup (session email → DB query)
+- Default rate limits apply via global limiter configuration
 
 ### Remaining Risks
-- No explicit output filtering
-- No rate-limiting
+- Ensure only intended fields are returned (avoid accidental disclosure of internal fields)
+- If endpoint becomes a target, consider tighter per-route rate limits
 
 
 ## Password Reset Flow
-## /reset (GET, POST)
+### /reset (GET, POST)
 ### Description
 Initiates password reset via email.
 
@@ -130,22 +132,21 @@ Initiates password reset via email.
 
 ### Threats
 - User enumeration
-- Email bombing
-- Abuse of reset functionality
+- Email bombing / abuse of reset flow
 
 ### Existing Mitigations
-- Token-based reset flow
-- Email ownership verification
+- Signed, time-limited token reset flow
+- Rate limiting on reset request to reduce email bombing
 
 ### Remaining Risks
-- User enumeration risk: the UI currently gives different feedback depending on whether the email exists
-- No password strength policy (weak passwords may be set)
+- User enumeration risk: the UI may give different feedback depending on whether the email exists
+- No password strength policy (weak passwords may be set during reset)
 - Token reuse invalidation is not implemented (token remains valid until expiry)
 
 
-## /reset/<token> (GET, POST)
+### /reset/<token> (GET, POST)
 ### Description
-Resets user password using time-limited token.
+Resets user password using a time-limited token.
 
 ### Inputs
 - reset token (URL)
@@ -153,44 +154,48 @@ Resets user password using time-limited token.
 - confirm_password
 
 ### Threats
-- Token brute-forcing
+- Token guessing (low probability but worth considering)
 - Weak password reuse
 
 ### Existing Mitigations
-- Signed, time-limited token (15 min)
-- Password hashing
+- Signed, time-limited token (e.g., 15 minutes)
+- Password hashing on update
+- Rate limiting on token route to reduce automated guessing
 
 ### Remaining Risks
 - No password strength policy
-- No token reuse invalidation
+- No token reuse invalidation (token remains valid until expiry)
 
 
 ## Chat & AI Integration
-## /chatgpt (POST)
+### /chatgpt (POST)
 ### Description
-Processes user queries and forwards them to OpenAI API.
+Processes user queries and forwards them to the OpenAI API.
 
 ### Inputs
-- User-controlled message text (JSON)
+- message text (JSON)
 
 ### Threats
-- Prompt injection
+- Prompt injection (content integrity risk)
 - Abuse leading to cost exhaustion
-- Denial of service via repeated queries
-- Injection into rendered HTML
+- Denial-of-service via repeated queries
+- Injection into rendered HTML (if output is rendered unsafely)
 
 ### Existing Mitigations
 - Login required
+- Rate limiting on AI endpoint to reduce abuse/cost exhaustion
 - Daily usage limit per user
 - Message length restriction
+- CI/testing mode disables external API calls (prevents secret exposure in CI)
 
 ### Remaining Risks
 - Output is rendered as HTML; ensure safe rendering rules to reduce XSS risk
-- Prompt injection can manipulate responses (a content integrity risk rather than server compromise)
+- Prompt injection can manipulate responses (content integrity rather than server compromise)
 - Cost-exhaustion is reduced by rate limits and daily quotas, but still possible at scale
 
+
 ## Code Execution (CRITICAL)
-## /run_code (POST)
+### /run_code (POST)
 ### Description
 Accepts user-submitted Python code and forwards it to an external sandbox service for execution.
 
@@ -198,22 +203,31 @@ Accepts user-submitted Python code and forwards it to an external sandbox servic
 - Python source code (JSON body)
 
 ### Threats
-- Remote Code Execution (RCE)
-- Sandbox escape
+- Remote Code Execution (RCE) attempts
+- Sandbox escape (if isolation is weak)
 - Infinite loops / resource exhaustion
 - Logic bypass via obfuscation
 - Abuse of external sandbox service
 
 ### Existing Mitigations
 - Authentication required
-- Blacklist-based keyword filtering
+- Rate limiting on code execution requests to reduce abuse
+- Blacklist-based keyword filtering (static checks)
 - Code length restriction
-- Execution performed in external sandbox
+- Execution performed in external sandbox service
+- Request timeout when calling the sandbox service
 
-### Assumptions
-- Sandbox enforces strict CPU, memory, and filesystem isolation
-- No access to environment variables
-- Network access restricted
+### Assumptions / Trust dependency
+This route depends on the external sandbox service for strong isolation. Desired properties include:
+- CPU/memory limits and termination guarantees
+- Filesystem isolation
+- Restricted network access
+- No access to Flask app environment variables
+
+Current backend guarantees (Flask side):
+- Code is not executed inside the Flask process
+- High-risk patterns are blocked via keyword checks
+- Code size is limited and requests to the sandbox use timeouts
 
 ### Remaining Risks
 - Keyword filtering can be bypassed via obfuscation; it is not a complete security boundary
@@ -222,7 +236,7 @@ Accepts user-submitted Python code and forwards it to an external sandbox servic
 
 
 ## Payment & Webhooks
-## /paypal/ipn (POST)
+### /paypal/ipn (POST)
 ### Description
 Receives PayPal Instant Payment Notifications and updates order records.
 
@@ -236,20 +250,20 @@ Receives PayPal Instant Payment Notifications and updates order records.
 - Duplicate transaction processing
 
 ### Existing Mitigations
-- Server-side IPN verification with PayPal
+- Server-side IPN post-back verification with PayPal (`cmd=_notify-validate`)
 - Payment status validation
-- Idempotent order handling
+- Idempotent order handling (insert/update by order_id)
+- Rate limiting on webhook endpoint to reduce flooding
 
 ### Remaining Risks
-- CSRF disabled (expected but dangerous if misconfigured)
-- No explicit replay detection
-- No signature-based verification
-- Add explicit replay protection / event deduplication strategy (beyond idempotent DB updates)
+- CSRF is exempted (expected for server-to-server webhooks); misconfiguration would be dangerous without verification
+- No explicit replay detection beyond idempotent DB updates
+- Ensure the verification endpoint matches the environment (sandbox vs production)
 - Ensure audit logging for payment status changes
 
 
 ## Static & File Serving
-## /&lt;filename&gt;
+### /<filename>
 ### Description
 Serves files from application root.
 
@@ -261,13 +275,14 @@ Serves files from application root.
 - Sensitive file exposure
 
 ### Existing Mitigations
-- Flask send_from_directory
+- Flask `send_from_directory`
 
 ### Remaining Risks
-- Serving root directory increases attack surface
-- No allowlist of file types
+- Serving files from the application root increases attack surface and raises the risk of sensitive file exposure
+- No allowlist of allowed filenames/types (recommend restricting to a small allowlist such as robots.txt/favicon.ico)
 
-## /sitemap.xml
+
+### /sitemap.xml
 ### Description
 Serves sitemap XML.
 
@@ -298,3 +313,4 @@ Serves sitemap XML.
 
 ### Medium
 - Content routes with tier enforcement
+- /get_user_profile (depends on returned fields and monitoring)
