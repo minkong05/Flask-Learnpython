@@ -54,10 +54,9 @@ Authenticates a user and establishes a session.
 - Session-based authentication
 
 ### Remaining Risks
-- CSRF disabled
-- No rate-limiting on login
-- No account lockout
-- Session cookies not explicitly hardened
+- No account lockout / progressive delay after repeated failures
+- Session cookies are not explicitly hardened via config (e.g., Secure/HttpOnly/SameSite)
+- If CSRF is enabled globally, JSON-based auth routes require careful handling (either provide CSRF tokens or explicitly document exemptions)
 
 
 ## /logout (GET)
@@ -139,8 +138,9 @@ Initiates password reset via email.
 - Email ownership verification
 
 ### Remaining Risks
-- No rate-limiting
-- Clear feedback when email exists
+- User enumeration risk: the UI currently gives different feedback depending on whether the email exists
+- No password strength policy (weak passwords may be set)
+- Token reuse invalidation is not implemented (token remains valid until expiry)
 
 
 ## /reset/<token> (GET, POST)
@@ -185,9 +185,9 @@ Processes user queries and forwards them to OpenAI API.
 - Message length restriction
 
 ### Remaining Risks
-- CSRF disabled
-- No global rate-limiting
-- Output rendered as HTML
+- Output is rendered as HTML; ensure safe rendering rules to reduce XSS risk
+- Prompt injection can manipulate responses (a content integrity risk rather than server compromise)
+- Cost-exhaustion is reduced by rate limits and daily quotas, but still possible at scale
 
 ## Code Execution (CRITICAL)
 ## /run_code (POST)
@@ -216,10 +216,9 @@ Accepts user-submitted Python code and forwards it to an external sandbox servic
 - Network access restricted
 
 ### Remaining Risks
-- Blacklist bypass via encoding or dynamic imports
-- Sandbox vulnerabilities
-- No per-user execution rate-limit
-- Blind trust in third-party sandbox
+- Keyword filtering can be bypassed via obfuscation; it is not a complete security boundary
+- Timeouts only limit how long Flask waits for the sandbox response; they do not guarantee sandbox-side termination
+- Trust is placed in the external sandbox service implementation and its isolation guarantees
 
 
 ## Payment & Webhooks
@@ -245,6 +244,8 @@ Receives PayPal Instant Payment Notifications and updates order records.
 - CSRF disabled (expected but dangerous if misconfigured)
 - No explicit replay detection
 - No signature-based verification
+- Add explicit replay protection / event deduplication strategy (beyond idempotent DB updates)
+- Ensure audit logging for payment status changes
 
 
 ## Static & File Serving

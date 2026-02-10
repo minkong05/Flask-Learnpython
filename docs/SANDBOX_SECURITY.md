@@ -3,6 +3,14 @@ This document analyses the security risks of executing user-submitted Python cod
 and explains why multiple defensive layers are required, even when a sandbox is used.
 
 
+## What stronger isolation means
+A robust sandbox enforces isolation at the runtime level (e.g., container/VM boundaries), including:
+- CPU/memory limits
+- filesystem isolation
+- network restrictions
+- process termination guarantees
+
+
 ## Why Blacklist Filtering Is Unsafe
 Blacklist-based filtering relies on matching specific keywords such as
 `import os` or `exec`. This approach is unsafe because Python provides many
@@ -25,11 +33,10 @@ code execution inside the sandbox and therefore does not prevent
 resource exhaustion such as infinite loops or excessive CPU usage.
 
 
-## Example Attack Scenarios
-### Dynamic Import Bypass
-An attacker can bypass keyword filters by importing modules dynamically:
+## Example bypass categories (high level)
+Attackers may attempt to bypass keyword filters using:
+- dynamic language features
+- obfuscation (encoding, concatenation, alternate syntax)
+- alternative APIs that achieve similar effects
 
-```python
-m = __import__("os")
-m.system("ls")
-```
+Because these patterns are difficult to enumerate exhaustively, keyword filtering should be treated as a *helper*, not the primary security boundary.

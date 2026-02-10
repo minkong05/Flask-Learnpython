@@ -59,6 +59,14 @@ Flask-Learnpython is a web-based learning platform that allows authenticated use
 - Gaining admin-level access via logic bugs
 
 
+## Controls mapping (where implemented)
+- Auth + sessions: Flask routes + decorators
+- Rate limiting: Flask-Limiter on auth/AI/code/IPN routes
+- CSRF: Flask-WTF (with explicit exemptions documented where needed)
+- Sandbox boundary: Flask forwards code to external sandbox service
+- Payment integrity: PayPal IPN server-side verification before DB updates
+
+
 ## Existing Security Controls
 - Password hashing (Werkzeug)
 - CSRF protection (Flask-WTF)
