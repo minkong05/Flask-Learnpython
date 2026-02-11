@@ -125,8 +125,7 @@ Open: `http://127.0.0.1:5000`
 
 
 ## Environment variables
-> Never commit real secrets. Add `password.env` to `.gitignore`.
-This project loads environment variables from `password.env` in the project root (not committed).
+This project loads environment variables from `password.env` in the project root.
 
 Create `password.env` (example values only):
 ```env
