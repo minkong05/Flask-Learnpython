@@ -109,6 +109,12 @@ User code execution
 
 
 ## Run locally
+### 1. Start Redis (required for rate limiting)
+In a separate terminal:
+```bash
+redis-server
+```
+### 1. 2. Set up and run the application
 ```bash
 python3 -m venv venv
 source venv/bin/activate
