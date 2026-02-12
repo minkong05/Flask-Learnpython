@@ -4,4 +4,7 @@ def test_chatgpt_empty_message(client):
         sess["email"] = "test@example.com"
 
     res = client.post("/chatgpt", json={"message": ""})
-    assert res.status_code in (400, 404)
+    assert res.status_code == 400
+
+    data = res.get_json()
+    assert data["message"] == "Message is required"

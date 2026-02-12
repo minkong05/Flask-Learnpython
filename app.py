@@ -26,6 +26,7 @@ from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
+import subprocess
 
 # ─── Rate-Limit ────────────────────────────────────────────────────────────────
 from flask_limiter import Limiter
@@ -53,6 +54,7 @@ app = Flask(__name__)
 app.config["TESTING"] = ("pytest" in sys.modules) or (os.getenv("TESTING") == "true")
 app.config['SECRET_KEY'] = os.urandom(24)
 app.secret_key = os.getenv('SECRET_KEY', 'fallback_secret_key')
+sandbox_secret = os.getenv("SANDBOX_SECRET")
 
 CORS(app)
 csrf = CSRFProtect(app)
@@ -120,6 +122,27 @@ LIMITS = {
 }
 #─────────────────────────────────────────────────────────────────────────────────
 
+
+# ─── Docker logic ───────────────────────────────────────────────────────────────
+def run_in_sandbox(code: str):
+    result = subprocess.run(
+        [
+            "docker", "run",
+            "--rm",
+            "--network=none",
+            "--read-only",
+            "--pids-limit=32",
+            "--memory=128m",
+            "--cpus=0.5",
+            "python-sandbox-image"
+        ],
+        input=code,
+        text=True,
+        capture_output=True,
+        timeout=3
+    )
+    return result.stdout or result.stderr
+#─────────────────────────────────────────────────────────────────────────────────
 
 # ─── User Management & SupaBase Helpers ─────────────────────────────────────────
 def require_supabase():
@@ -267,7 +290,6 @@ def check_daily_limit(max_queries=20):
             return f(*args, **kwargs)
         return wrapped
     return decorator
-
 # ─────────────────────────────────────────────────────────────────────────────────
 
 
@@ -603,76 +625,22 @@ def run_code():
     data = request.get_json()
     code = data.get('code', '')
 
-   # Block dangerous operations (e.g., file I/O or system commands)
-    blacklist = [
-        # --- OS / system access ---
-        'import os',
-        'import sys',
-        'import subprocess',
-        'import shutil',
-        'import signal',
-        'import ctypes',
-        'import resource',
-
-        # --- Dangerous builtins / eval ---
-        '__import__',
-        'eval(',
-        'exec(',
-        'compile(',
-
-        # --- File system access ---
-        'open(',
-        'read(',
-        'write(',
-        'file(',
-
-        # --- Network access ---
-        'import socket',
-        'import requests',
-        'import urllib',
-        'import http',
-        'import ftplib',
-
-        # --- Environment / secrets ---
-        'os.environ',
-        'getenv(',
-
-        # --- Process & threading ---
-        'import threading',
-        'import multiprocessing',
-        'fork(',
-        'kill(',
-
-        # --- Python internals / escapes ---
-        '__class__',
-        '__bases__',
-        '__subclasses__',
-        '__globals__',
-        '__getattribute__',
-        '__dict__',
-
-        # --- Code execution tricks ---
-        'lambda ',
-        'globals(',
-        'locals(',
-    ]
-    
-    if any(keyword in code for keyword in blacklist):
-        return jsonify({"error": "Forbidden keyword in code"}), 403
-
    # Limit the length of the submitted code
     if len(code) > 1000:
         return jsonify({"error": "Code too long"}), 413
 
-  # Send the code to the sandbox service for execution
     try:
-       # URL of the sandbox service (the Render-hosted sandbox web service address)
-        sandbox_service_url = "https://learnpython-sandbox-ncod.onrender.com/execute"
+        
+        # sandbox_service_url = "https://learnpython-sandbox-ncod.onrender.com/execute"
+        sandbox_service_url = "http://localhost:5001/execute"
 
-      # Send a POST request to the sandbox service
+        if not sandbox_secret:
+            return jsonify({"error": "Sandbox secret not configured"}), 500
+
         response = requests.post(
             sandbox_service_url,
             json={"code": code},
+            headers={"X-SANDBOX-SECRET": sandbox_secret},
             timeout=10
         )
 
