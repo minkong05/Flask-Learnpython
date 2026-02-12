@@ -634,7 +634,7 @@ def run_code():
         # sandbox_service_url = "https://learnpython-sandbox-ncod.onrender.com/execute"
         sandbox_service_url = "http://localhost:5001/execute"
 
-        if not sandbox_secret:
+        if not sandbox_secret and not app.config.get("TESTING"):
             return jsonify({"error": "Sandbox secret not configured"}), 500
 
         response = requests.post(
