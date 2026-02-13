@@ -144,7 +144,7 @@ Initiates password reset via email.
 - Token reuse invalidation is not implemented (token remains valid until expiry)
 
 
-### /reset/<token> (GET, POST)
+### /reset/&lt;token&gt; (GET, POST)
 ### Description
 Resets user password using a time-limited token.
 
@@ -197,7 +197,7 @@ Processes user queries and forwards them to the OpenAI API.
 ## Code Execution (CRITICAL)
 ### /run_code (POST)
 ### Description
-Accepts user-submitted Python code and forwards it to an external sandbox service for execution.
+Accepts user-submitted Python code and accepts user-submitted Python code and executes it inside a locally hosted Docker-based sandbox with OS-level isolation.
 
 ### Inputs
 - Python source code (JSON body)
@@ -214,25 +214,26 @@ Accepts user-submitted Python code and forwards it to an external sandbox servic
 - Rate limiting on code execution requests to reduce abuse
 - Docker per-run container with: --network=none, memory/cpu/pids limits, sandbox timeout
 - Code length restriction
-- Execution performed in external sandbox service
+- Execution performed inside a per-run Docker container providing OS-level isolation
 - Request timeout when calling the sandbox service
 
 ### Assumptions / Trust dependency
-This route depends on the external sandbox service for strong isolation. Desired properties include:
-- CPU/memory limits and termination guarantees
-- Filesystem isolation
-- Restricted network access
-- No access to Flask app environment variables
+This route depends on local Docker container isolation for security enforcement. Desired properties include:
+- CPU, memory, and PID limits enforced at the container level
+- Filesystem isolation within the container
+- Network isolation (--network=none)
+- No access to Flask application environment variables or host filesystem
 
 Current backend guarantees (Flask side):
 - Code is not executed inside the Flask process
-- High-risk patterns are blocked via keyword checks
+- Code execution occurs in a separate Docker container process
+- High-risk patterns are blocked via keyword checks (defense-in-depth)
 - Code size is limited and requests to the sandbox use timeouts
 
 ### Remaining Risks
 - Keyword filtering can be bypassed via obfuscation; it is not a complete security boundary
 - Timeouts only limit how long Flask waits for the sandbox response; they do not guarantee sandbox-side termination
-- Trust is placed in the external sandbox service implementation and its isolation guarantees
+- Trust is placed in Docker runtime configuration and host kernel security
 
 
 ## Payment & Webhooks
