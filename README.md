@@ -170,8 +170,6 @@ Flask-Learnpython/
 ├── tests/
 ├── app.py
 ├── requirements.txt
-├── robots.txt
-├── sitemap.xml
 └── Procfile
 ```
 
