@@ -75,13 +75,12 @@ Detailed security notes: `/docs/SECURITY_OVERVIEW.md`, `/docs/ATTACK_SURFACE.md`
 User-submitted Python code is **not executed inside the Flask process**.  
 The backend forwards code to a **separate sandbox service**, with layered safeguards:
 
-- Sandboxed code execution via a separate Docker-based sandbox service (OS isolation)
-- Limit code size
-- Enforce a request timeout when calling the sandbox service
+Layers of control:
+- Flask-side gates: login required, rate limits, max code length, request timeouts
+- Sandbox authentication: Flask → sandbox requests include `X-SANDBOX-SECRET`
+- Container isolation: per-run containers with network disabled and strict CPU/memory/PID/time limits
 
-Trade-off: keyword filtering is not equivalent to full container/VM isolation.  
-See `/docs/SANDBOX_SECURITY.md` for risks and planned improvements.
-
+Important: blacklist/keyword filtering is **not** treated as a security boundary. Isolation comes from the container boundary.
 
 ## Features
 Learning platform
@@ -95,7 +94,7 @@ Integrations
 
 User code execution
 - `/run_code` forwards code to an external sandbox service
-- Keyword checks + code size limits + request timeout
+- Controls in Flask for /run_code: login required, rate limit, max code length (1000 chars), and a request timeout when calling the sandbox service.
 
 
 ## Tech stack
@@ -136,19 +135,27 @@ This project loads environment variables from `password.env` in the project root
 
 Create `password.env` (example values only):
 ```env
-SECRET_KEY="dev-only-change-me"
 OPENAI_API_KEY="sk-example"
 SUPABASE_URL="https://example.supabase.co"
 SUPABASE_API_KEY="example_key"
-MAIL_PASSWORD="gmail_app_password"
+PAYPAL_CLIENT_ID
+PAYPAL_CLIENT_SECRET
 WEBHOOK_ID="example"
+MAIL_PASSWORD="gmail_app_password"
+SANDBOX_SECRET="dev-only-change-me"
+SECRET_KEY="dev-only-change-me"
+
+
+
+
+
 ```
 
 
 ## Testing + CI
 Run tests: `pytest`
 
-Current tests focus on defensive behaviour (auth input validation, login-required gates, run_code filtering/limits).
+Current tests focus on defensive behaviour (auth input validation, login-required gates, run_code limits).
 CI runs pytest with TESTING=true so external services (Supabase/OpenAI) are not required.
 
 
@@ -172,9 +179,7 @@ Flask-Learnpython/
 ## Limitations & next steps
 Limitations:
 - Single-file Flask app (app.py)
-- Sandbox protection includes keyword filtering + external execution boundary (not full container/VM isolation)
 - Tests exist, but broader integration coverage (auth/payment flows) is still limited
-- Rate limiting/storage is not designed for multi-instance deployments
 
 Next steps:
 - Account lockout / progressive delays after repeated failed logins

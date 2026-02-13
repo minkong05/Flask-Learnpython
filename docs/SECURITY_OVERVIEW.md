@@ -65,7 +65,7 @@ Flask-Learnpython is a web-based learning platform that allows authenticated use
 - Rate limiting: Flask-Limiter on auth/AI/code/IPN routes
 - CSRF: Flask-WTF (with explicit exemptions documented where needed)
 - Flask authenticates sandbox requests using X-SANDBOX-SECRET
-- Sandbox executes code in short-lived Docker container with no network + resource limits + timeouts
+- Sandbox execution is performed by a separate service (port 5001). In this snapshot, the sandbox container is started with --network=none, --read-only, --pids-limit=32, --memory=128m, --cpus=0.5, and a short timeout.
 - Payment integrity: PayPal IPN server-side verification before DB updates
 
 

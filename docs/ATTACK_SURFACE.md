@@ -196,44 +196,39 @@ Processes user queries and forwards them to the OpenAI API.
 
 ## Code Execution (CRITICAL)
 ### /run_code (POST)
+
 ### Description
-Accepts user-submitted Python code and accepts user-submitted Python code and executes it inside a locally hosted Docker-based sandbox with OS-level isolation.
+Accepts user-submitted Python code and executes it inside a **separate local sandbox service** that runs each execution in a **per-run Docker container** (OS-level isolation).
 
 ### Inputs
 - Python source code (JSON body)
 
 ### Threats
 - Remote Code Execution (RCE) attempts
-- Sandbox escape (if isolation is weak)
+- Sandbox escape (container escape / misconfiguration)
 - Infinite loops / resource exhaustion
-- Logic bypass via obfuscation
-- Abuse of external sandbox service
+- Abuse at scale (cost / CPU exhaustion)
 
 ### Existing Mitigations
 - Authentication required
-- Rate limiting on code execution requests to reduce abuse
-- Docker per-run container with: --network=none, memory/cpu/pids limits, sandbox timeout
+- Rate limiting on code execution requests
 - Code length restriction
-- Execution performed inside a per-run Docker container providing OS-level isolation
-- Request timeout when calling the sandbox service
+- Sandbox request authenticated via `X-SANDBOX-SECRET`
+- Per-run Docker container with:
+  - `--network=none`
+  - strict CPU/memory/PID limits
+  - enforced execution timeout / termination
 
-### Assumptions / Trust dependency
-This route depends on local Docker container isolation for security enforcement. Desired properties include:
-- CPU, memory, and PID limits enforced at the container level
-- Filesystem isolation within the container
-- Network isolation (--network=none)
-- No access to Flask application environment variables or host filesystem
-
-Current backend guarantees (Flask side):
-- Code is not executed inside the Flask process
-- Code execution occurs in a separate Docker container process
-- High-risk patterns are blocked via keyword checks (defense-in-depth)
-- Code size is limited and requests to the sandbox use timeouts
+### Trust dependency
+Security relies on correct Docker runtime configuration and host hardening:
+- no privileged containers
+- no unsafe volume mounts
+- no host networking
+- Docker daemon secured
 
 ### Remaining Risks
-- Keyword filtering can be bypassed via obfuscation; it is not a complete security boundary
-- Timeouts only limit how long Flask waits for the sandbox response; they do not guarantee sandbox-side termination
-- Trust is placed in Docker runtime configuration and host kernel security
+- Containers share the host kernel; kernel vulnerabilities can enable escape
+- Flask-side request timeouts must be paired with **reliable container termination**
 
 
 ## Payment & Webhooks

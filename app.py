@@ -794,25 +794,6 @@ def save_to_database(order_data):
 def serve_root_files(filename):
     return send_from_directory('.', filename)
 
-@app.route('/sitemap.xml')
-def serve_sitemap():
-    try:
-        # Get absolute path and verify it's within app directory
-        sitemap_path = Path(app.root_path) / 'sitemap.xml'
-        if not sitemap_path.is_file():
-            abort(404)
-            
-        with open(sitemap_path, 'r') as file:
-            sitemap_content = file.read()
-            
-        return Response(
-            sitemap_content, 
-            mimetype='application/xml',
-            headers={'Content-Type': 'application/xml; charset=utf-8'}
-        )
-    except Exception as e:
-        app.logger.error(f"Error serving sitemap: {e}")
-        abort(500)
 # ─────────────────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
