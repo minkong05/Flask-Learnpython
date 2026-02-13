@@ -75,7 +75,7 @@ Detailed security notes: `/docs/SECURITY_OVERVIEW.md`, `/docs/ATTACK_SURFACE.md`
 User-submitted Python code is **not executed inside the Flask process**.  
 The backend forwards code to a **separate sandbox service**, with layered safeguards:
 
-- Reject high-risk keywords/patterns (basic static checks)
+- Sandboxed code execution via a separate Docker-based sandbox service (OS isolation)
 - Limit code size
 - Enforce a request timeout when calling the sandbox service
 
@@ -114,7 +114,14 @@ In a separate terminal:
 ```bash
 redis-server
 ```
-### 1. 2. Set up and run the application
+### 2. Start the sandbox service (required for /run_code)
+In another separate terminal:
+```bash
+cd sandbox
+python3.12 execution_service.py
+```
+
+### 3. Set up and run the application
 ```bash
 python3 -m venv venv
 source venv/bin/activate

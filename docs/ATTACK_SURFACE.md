@@ -212,7 +212,7 @@ Accepts user-submitted Python code and forwards it to an external sandbox servic
 ### Existing Mitigations
 - Authentication required
 - Rate limiting on code execution requests to reduce abuse
-- Blacklist-based keyword filtering (static checks)
+- Docker per-run container with: --network=none, memory/cpu/pids limits, sandbox timeout
 - Code length restriction
 - Execution performed in external sandbox service
 - Request timeout when calling the sandbox service

@@ -22,6 +22,7 @@ Flask-Learnpython is a web-based learning platform that allows authenticated use
 - Flask Web Server ↔ External Sandbox Service
 - Flask Web Server ↔ Database
 - Flask Web Server ↔ PayPal IPN/Webhook
+- Flask Web Server ↔ Sandbox Service (local service that runs code in Docker)
 
 
 ## Threat Actors
@@ -63,7 +64,8 @@ Flask-Learnpython is a web-based learning platform that allows authenticated use
 - Auth + sessions: Flask routes + decorators
 - Rate limiting: Flask-Limiter on auth/AI/code/IPN routes
 - CSRF: Flask-WTF (with explicit exemptions documented where needed)
-- Sandbox boundary: Flask forwards code to external sandbox service
+- Flask authenticates sandbox requests using X-SANDBOX-SECRET
+- Sandbox executes code in short-lived Docker container with no network + resource limits + timeouts
 - Payment integrity: PayPal IPN server-side verification before DB updates
 
 

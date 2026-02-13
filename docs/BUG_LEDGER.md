@@ -60,6 +60,14 @@ Use known `__subclasses__` or object graph traversal exploits.
 ### Priority
 🚨 **Immediate**
 
+### Fix Status
+- **Status:** Fixed  
+- **Date:** 2026-02-13  
+- **Approach:**
+  - Replaced Render-based execution sandbox with a locally hosted Docker container
+  - Enforced OS-level isolation via container boundaries instead of Python-level restrictions
+- **Residual Risk:**
+  - Docker escape category risk + need hardening.
 
 
 ## 🟠 BUG-003 — Session Identity Fallback to IP

@@ -32,6 +32,14 @@ for a response from the sandbox service. It does not terminate user
 code execution inside the sandbox and therefore does not prevent
 resource exhaustion such as infinite loops or excessive CPU usage.
 
+## Current project implementation (Flask-LearnPython)
+- no blacklist now
+- Docker isolation
+- local service on 5001
+- secret header auth
+- resource limits and timeouts
+- remaining risks (Docker daemon trust, escape risk)
+
 
 ## Example bypass categories (high level)
 Attackers may attempt to bypass keyword filters using:
