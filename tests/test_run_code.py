@@ -62,4 +62,3 @@ def test_run_code_sandbox_error(mock_post, client):
     res = client.post("/run_code", json={"code": "bad code"})
 
     assert res.status_code == 500
-

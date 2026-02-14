@@ -52,7 +52,9 @@ with open(CONTENT_DIR / "content2.json", "r", encoding="utf-8") as file:
 app = Flask(__name__)
 
 app.config["TESTING"] = ("pytest" in sys.modules) or (os.getenv("TESTING") == "true")
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+if not app.config['SECRET_KEY']:
+    raise RuntimeError("SECRET_KEY not set")
 app.secret_key = os.getenv('SECRET_KEY', 'fallback_secret_key')
 sandbox_secret = os.getenv("SANDBOX_SECRET")
 
