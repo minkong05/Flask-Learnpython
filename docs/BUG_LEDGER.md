@@ -29,17 +29,13 @@ Security control implemented without shared state.
 🚨 **Immediate**
 
 ### Fix Status
-- **Status:** Partially Fixed  
-- **Date:** 2026-02-14  
+- **Status:** Fixed  
+- **Date:** 2026-02-10  
 - **Approach:**
-  - Removed IP-based identity fallback from rate-limiting logic
-  - Migrated rate limiting to Redis-backed shared state
-  - Decoupled rate-limit identity from authentication/session state
+  - Replaced in-memory rate limiting with Redis-backed shared state
 - **Residual Risk:**
-  - Authentication still relies on `logged_in` session flag
-  - Session ID is not regenerated on login (session fixation risk)
-  - Authorization state is stored in session
-  - Secure cookie flags are not fully enforced in all environments
+  - Rate limiting depends on Redis availability
+  - Redis outage would disable enforcement (fail-closed recommended)
 
 
 ## 🔴 BUG-002 — Python Sandbox Is Not OS-Isolated (RCE)
@@ -93,6 +89,19 @@ Identity and rate-limit keys conflated.
 
 ### Priority
 **High**
+
+### Fix Status
+- **Status:** Partially Fixed  
+- **Date:** 2026-02-14  
+- **Approach:**
+  - Removed IP-based identity fallback from rate-limiting logic
+  - Migrated rate limiting to Redis-backed shared state
+  - Decoupled rate-limit identity from authentication/session state
+- **Residual Risk:**
+  - Authentication still relies on `logged_in` session flag
+  - Session ID is not regenerated on login (session fixation risk)
+  - Authorization state is stored in session
+  - Secure cookie flags are not fully enforced in all environments
 
 
 
