@@ -278,24 +278,6 @@ Serves files from application root.
 - No allowlist of allowed filenames/types (recommend restricting to a small allowlist such as robots.txt/favicon.ico)
 
 
-### /sitemap.xml
-### Description
-Serves sitemap XML.
-
-### Inputs
-- None
-
-### Threats
-- Information disclosure
-- File read errors
-
-### Existing Mitigations
-- Explicit file existence checks
-
-### Remaining Risks
-- Minimal (low impact)
-
-
 ## Summary of High-Risk Attack Surfaces
 ### Critical
 - /run_code
