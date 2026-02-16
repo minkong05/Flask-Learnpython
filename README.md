@@ -4,15 +4,22 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 
-# Flask-LearnPython
-A Flask backend for an interactive Python-learning platform: structured lessons, AI assistance, and **restricted code execution via a separate sandbox service**.
+# Flask-LearnPython — Security-focused Flask learning platform
+A Flask backend for an interactive Python-learning site with **tier-gated content**, **AI assistance**, and **safe user code execution via a separate sandbox service**.
 
-**Highlights**
-- Session-based auth + tier-gated routes (free/premium)
-- Supabase (Postgres) for users and tiers
-- OpenAI API integration (AI assistant)
-- PayPal IPN verification flow for subscription upgrades
-- Defensive controls: CSRF, rate limiting, input validation, CI-safe testing mode
+This repo is a **defensive security learning project**: I focused on identifying trust boundaries, documenting threats, and implementing practical controls (rate limiting, CSRF, authentication gates, and sandbox isolation).
+
+**Key security features**
+- Session-based authentication + tier-based authorisation (free/premium)
+- CSRF protection for browser flows (Flask-WTF) and explicit exemptions where appropriate (e.g., webhooks)
+- Rate limiting for brute-force and abuse-prone routes (auth, AI, code execution, IPN)
+- User-submitted Python is executed **outside the Flask process** (separate sandbox service + Docker isolation)
+- CI-safe mode (`TESTING=true`) so tests run without production credentials
+
+**Security docs (recommended)**
+- `docs/SECURITY_OVERVIEW.md` — threat model + trust boundaries
+- `docs/ATTACK_SURFACE.md` — route-by-route risks/mitigations
+- `docs/SANDBOX_SECURITY.md` — why isolation matters for code execution
 
 
 ## Screenshots
@@ -108,32 +115,48 @@ User code execution
 
 
 ## Run locally
-### 1. Start Redis (required for rate limiting)
+### Prereqs
+- Python 3.12
+- Redis (rate limiting storage)
+- Docker (sandbox execution)
+
+### 1. Start Redis
 In a separate terminal:
 ```bash
 redis-server
 ```
-### 2. Start the sandbox service (required for /run_code)
+
+### 2. Build sandbox image
+From repo root:
+```bash
+docker build -t python-sandbox ./sandbox
+```
+
+### 3. Start the sandbox service
 In another separate terminal:
 ```bash
 cd sandbox
 python3.12 execution_service.py
 ```
 
-### 3. Set up and run the application
+### 4. Run the Flask app
+From repo root:
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 python3.12 app.py
 ```
+
 Open: `http://127.0.0.1:5000`
 
 
 ## Environment variables
-This project loads environment variables from `password.env` in the project root.
+This project loads environment variables from `password.env` in the project root and `secret.env` in ./sandbox.
 
-Create `password.env` (example values only):
+Create `password.env` and `secret.env` (example values only):
+
+password.env
 ```env
 OPENAI_API_KEY="sk-example"
 SUPABASE_URL="https://example.supabase.co"
@@ -144,11 +167,11 @@ WEBHOOK_ID="example"
 MAIL_PASSWORD="gmail_app_password"
 SANDBOX_SECRET="dev-only-change-me"
 SECRET_KEY="dev-only-change-me"
+```
 
-
-
-
-
+secret.env
+```env
+SANDBOX_SECRET="dev-only-change-me"
 ```
 
 
@@ -170,7 +193,6 @@ Flask-Learnpython/
 ├── tests/
 ├── app.py
 ├── requirements.txt
-└── Procfile
 ```
 
 

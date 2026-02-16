@@ -1,19 +1,20 @@
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 import subprocess
 import uuid
 import os
 
+load_dotenv("secret.env")
+
 app = Flask(__name__)
 
 # For local testing
-SANDBOX_SECRET = "super-long-random-string-here"
+SANDBOX_SECRET = os.getenv("SANDBOX_SECRET")
 
 @app.route("/execute", methods=["POST"])
 def execute():
 
     if request.headers.get("X-SANDBOX-SECRET") != SANDBOX_SECRET:
-        print(SANDBOX_SECRET)
-        print(request.headers.get("X-SANDBOX-SECRET"))
         return jsonify({"error": "Unauthorized"}), 403
 
     data = request.get_json()
