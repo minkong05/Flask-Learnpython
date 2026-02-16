@@ -201,12 +201,15 @@ Limitations:
 - Learning project; not production-ready
 - Single-file Flask app (app.py)
 - Tests exist, but broader integration coverage (auth/payment flows) is still limited
+- Session/cookie hardening not fully production-grade
+- Logging is not a full security audit log (needs consistent redaction + event-based audit trails for auth/payment/sandbox actions).
 
 Next steps:
 - Account lockout / progressive delays after repeated failed logins
 - Password strength policy + email verification
 - Expand integration tests (auth, PayPal IPN flow, sandbox boundary)
-- Strengthen sandbox isolation guarantees
+- Harden session cookies and restrict CORS for the real frontend origin(s)
+- Add structured security audit logging (auth events, IPN state changes, sandbox exec attempts) with strict redaction
 
 
 ## Author
