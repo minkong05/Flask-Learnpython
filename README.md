@@ -198,6 +198,7 @@ Flask-Learnpython/
 
 ## Limitations & next steps
 Limitations:
+- Learning project; not production-ready
 - Single-file Flask app (app.py)
 - Tests exist, but broader integration coverage (auth/payment flows) is still limited
 
