@@ -27,19 +27,18 @@ def execute():
             [
                 "docker", "run",
                 "--rm",
-                "--name", container_name,
                 "--network=none",
                 "--memory=128m",
                 "--cpus=0.5",
                 "--pids-limit=32",
-                "python-sandbox",
-                "python3", "-c", code
+                "-i", 
+                "python-sandbox"
             ],
-            capture_output=True,
+            input=code,
             text=True,
+            capture_output=True,
             timeout=5
         )
-
         return jsonify({
             "output": result.stdout,
             "error": result.stderr

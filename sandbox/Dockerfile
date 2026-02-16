@@ -8,5 +8,4 @@ WORKDIR /sandbox
 
 COPY runner.py .
 
-# No network tools, no shell
 CMD ["python", "runner.py"]

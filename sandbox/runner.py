@@ -13,6 +13,50 @@ def timeout_handler(signum, frame):
 
 signal.signal(signal.SIGXCPU, timeout_handler)
 
+
+# --- WHITELISTS ---
+SAFE_BUILTINS = {
+    # ---- Basic Types ----
+    "int": int,
+    "float": float,
+    "str": str,
+    "bool": bool,
+    "list": list,
+    "dict": dict,
+    "set": set,
+    "tuple": tuple,
+
+    # ---- Constructors ----
+    "range": range,
+    "len": len,
+    "enumerate": enumerate,
+    "zip": zip,
+
+    # ---- Math & Utility ----
+    "abs": abs,
+    "min": min,
+    "max": max,
+    "sum": sum,
+    "round": round,
+
+    # ---- Logic ----
+    "all": all,
+    "any": any,
+
+    # ---- Functional ----
+    "map": map,
+    "filter": filter,
+
+    # ---- Output ----
+    "print": print,
+
+    # ---- Exceptions ----
+    "Exception": Exception,
+    "ValueError": ValueError,
+    "TypeError": TypeError,
+}
+
+
 # --- EXECUTION ---
 code = sys.stdin.read()
-exec(code, {"__builtins__": {}})
+exec(code, {"__builtins__": SAFE_BUILTINS})
