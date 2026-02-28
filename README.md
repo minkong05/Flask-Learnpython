@@ -1,5 +1,6 @@
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![Flask](https://img.shields.io/badge/flask-web%20framework-lightgrey)
+![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)
 ![CI](https://github.com/minkong05/Flask-Learnpython/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
